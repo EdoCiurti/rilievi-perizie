@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Rilievi & Perizie</title>
+  <link rel="stylesheet" href="stile.css" />
+  <script src="libreria.js"></script>
+  <link rel="icon" href="favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --secondary: #10B981;
+      --dark: #1E293B;
+      --light: #F8FAFC;
+      --surface: #FFFFFF;
+      --surface-alt: #F1F5F9;
+      --error: #EF4444;
+      --warn: #F59E0B;
+    }
+    
+    /* Dark mode variables */
+    .dark {
+      --primary: #6366F1;
+      --primary-hover: #818CF8;
+      --secondary: #34D399;
+      --dark: #F8FAFC;
+      --light: #0F172A;
+      --surface: #1E293B;
+      --surface-alt: #334155;
+      --error: #EF4444;
+      --warn: #F59E0B;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Background animated elements */
+    .bg-element {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.2;
+      z-index: -1;
+      animation: float 15s infinite ease-in-out;
+    }
+    
+    .bg-element-1 {
+      width: 500px;
+      height: 500px;
+      background: var(--primary);
+      top: -200px;
+      left: -200px;
+      animation-delay: 0s;
+    }
+    
+    .bg-element-2 {
+      width: 600px;
+      height: 600px;
+      background: var(--secondary);
+      bottom: -300px;
+      right: -200px;
+      animation-delay: -5s;
+    }
+    
+    .bg-element-3 {
+      width: 300px;
+      height: 300px;
+      background: var(--warn);
+      top: 50%;
+      right: 10%;
+      animation-delay: -10s;
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-20px) scale(1.05);
+      }
+    }
+    
+    .login-container {
+      width: 90%;
+      max-width: 480px;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 0;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(5px);
+      margin: 20px; /* Aggiungi margine per evitare che tocchi i bordi dello schermo */
+    }
+    
+    .brand-header {
+      position: relative;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 2rem 1.5rem 3rem; /* Ridotto il padding */
+      text-align: center;
+      color: white;
+      overflow: hidden;
+    }
+    
+    .brand-header svg {
+      width: 60px; /* Ridotto da 80px */
+      height: 60px; /* Ridotto da 80px */
+      margin-bottom: 0.75rem; /* Ridotto da 1rem */
+    }
+    
+    .brand-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .brand-header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+    
+    .brand-header::after {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: var(--surface);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+    
+    .form-container {
+      padding: 1.5rem;
+      overflow-y: auto; /* Aggiungi scroll se necessario */
+      max-height: 70vh; /* Imposta un'altezza massima */
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      background: var(--surface-alt);
+      border-radius: 12px;
+      position: relative;
+    }
+    
+    .tab-indicator {
+      position: absolute;
+      height: 100%;
+      width: 50%;
+      background: var(--primary);
+      top: 0;
+      left: 0;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+    }
+    
+    .tab-indicator.register {
+      transform: translateX(100%);
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      color: var(--dark);
+    }
+    
+    .tab.active {
+      color: white;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .input-group {
+      position: relative;
+      margin-bottom: 1rem; /* Ridotto da 1.5rem */
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3rem;
+      background: var(--surface-alt);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--dark);
+      transition: all 0.3s;
+    }
+    
+    .input-group input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+    
+    .input-group .icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+    }
+    
+    button {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    
+    button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.3);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      transition: transform 0.5s, opacity 0.5s;
+    }
+    
+    button:active::after {
+      transform: translate(-50%, -50%) scale(3);
+      opacity: 0;
+      transition: 0s;
+    }
+    
+    .error-message {
+      color: var(--error);
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .error-message::before {
+      content: "!";
+      background: var(--error);
+      color: white;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 8px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .info-message {
+      background: rgba(79, 70, 229, 0.1);
+      border-left: 3px solid var(--primary);
+      padding: 0.75rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      color: var(--dark);
+      line-height: 1.4;
+    }
+    
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+    
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(15deg);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      body {
+        align-items: flex-start; /* Allinea in alto anziché al centro */
+        padding: 20px 0; /* Aggiungi padding verticale */
+      }
+      
+      .login-container {
+        width: 95%;
+        margin: 10px;
+        max-height: 95vh; /* Limita l'altezza */
+      }
+      
+      .brand-header {
+        padding: 1.5rem 1rem 2.5rem; /* Ulteriormente ridotto */
+      }
+      
+      .brand-header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .brand-header p {
+        font-size: 0.9rem;
+      }
+      
+      .form-container {
+        padding: 1.25rem;
+        max-height: 65vh;
+      }
+      
+      .tabs {
+        margin-bottom: 1.5rem; /* Ridotto */
+      }
+      
+      .tab {
+        padding: 0.75rem 0.5rem; /* Ridotto */
+        font-size: 0.9rem; /* Testo più piccolo */
+      }
+      
+      .input-group input {
+        padding: 0.75rem 0.75rem 0.75rem 2.5rem; /* Ridotto */
+        font-size: 0.9rem; /* Testo più piccolo */
+      }
+      
+      .input-group .icon {
+        left: 0.75rem; /* Spostato */
+      }
+      
+      button {
+        padding: 0.75rem; /* Ridotto */
+        font-size: 0.9rem; /* Testo più piccolo */
+      }
+    }
+    
+    /* Per schermi molto piccoli, ulteriori aggiustamenti */
+    @media (max-width: 360px) {
+      .brand-header svg {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .brand-header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .form-container {
+        padding: 1rem;
+      }
+      
+      .input-group {
+        margin-bottom: 0.75rem;
+      }
+      
+      .info-message {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+      }
+    }
+    
+    /* Per gestire schermi con altezza ridotta */
+    @media (max-height: 700px) {
+      .brand-header {
+        padding: 1rem 1rem 2rem;
+      }
+      
+      .brand-header svg {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0.5rem;
+      }
+      
+      .brand-header h1 {
+        font-size: 1.3rem;
+        margin-bottom: 0.25rem;
+      }
+      
+      .brand-header p {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background elements -->
+  <div class="bg-element bg-element-1"></div>
+  <div class="bg-element bg-element-2"></div>
+  <div class="bg-element bg-element-3"></div>
+
+  <div class="login-container">
+    <div class="theme-toggle" id="themeToggle">
+      <i class="fas fa-moon"></i>
+    </div>
+    
+    <div class="brand-header">
+      <!-- Logo SVG -->
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L4 5V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V5L12 2Z" fill="white" opacity="0.4"/>
+        <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="white"/>
+        <path d="M14.5 12C14.5 13.3807 13.3807 14.5 12 14.5C10.6193 14.5 9.5 13.3807 9.5 12C9.5 10.6193 10.6193 9.5 12 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <h1>Rilievi & Perizie</h1>
+      <p>Sistema di gestione professionale</p>
+    </div>
+    
+    <div class="form-container">
+      <div class="tabs">
+        <div class="tab-indicator" id="tabIndicator"></div>
+        <div id="loginTab" class="tab active">Accedi</div>
+        <div id="registerTab" class="tab">Registrati</div>
+      </div>
+      
+      <!-- Login Form -->
+      <div id="loginContent" class="tab-content active">
+        <form id="loginForm">
+          <div class="input-group">
+            <span class="icon"><i class="fas fa-user"></i></span>
+            <input type="text" name="username" placeholder="Nome utente" required />
+          </div>
+          <div class="input-group">
+            <span class="icon"><i class="fas fa-lock"></i></span>
+            <input type="password" name="password" placeholder="Password" required />
+          </div>
+          <button type="submit" class="mt-4">Accedi</button>
+          <p id="login-error-message" class="error-message"></p>
+        </form>
+      </div>
+      
+      <!-- Register Form -->
+      <div id="registerContent" class="tab-content">
+        <form id="registerForm">
+          <div class="input-group">
+            <span class="icon"><i class="fas fa-user-plus"></i></span>
+            <input type="text" name="username" placeholder="Nome utente" required />
+          </div>
+          <div class="input-group">
+            <span class="icon"><i class="fas fa-lock"></i></span>
+            <input type="password" name="password" placeholder="Password" required />
+          </div>
+          <div class="input-group">
+            <span class="icon"><i class="fas fa-check-circle"></i></span>
+            <input type="password" name="confirmPassword" placeholder="Conferma password" required />
+          </div>
+          
+          <input type="hidden" name="ruolo" value="operatore" />
+          
+          <div class="info-message">
+            <i class="fas fa-info-circle mr-2"></i> Registrandoti creerai un account con ruolo operatore. Gli amministratori possono essere creati solo da amministratori esistenti.
+          </div>
+          
+          <button type="submit">Registrati come Operatore</button>
+          <p id="register-error-message" class="error-message"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle functionality
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const icon = document.querySelector('#themeToggle i');
+      if (document.body.classList.contains('dark')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+    });
+    
+    // Tab switching logic with animated indicator
+    document.getElementById('loginTab').addEventListener('click', () => {
+      document.getElementById('loginTab').classList.add('active');
+      document.getElementById('registerTab').classList.remove('active');
+      document.getElementById('loginContent').classList.add('active');
+      document.getElementById('registerContent').classList.remove('active');
+      document.getElementById('tabIndicator').classList.remove('register');
+    });
+    
+    document.getElementById('registerTab').addEventListener('click', () => {
+      document.getElementById('loginTab').classList.remove('active');
+      document.getElementById('registerTab').classList.add('active');
+      document.getElementById('loginContent').classList.remove('active');
+      document.getElementById('registerContent').classList.add('active');
+      document.getElementById('tabIndicator').classList.add('register');
+    });
+
+    // Login form handling
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Clear previous error messages
+      document.getElementById('login-error-message').innerText = '';
+      
+      const formData = new FormData(loginForm);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      // Show loading indicator
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerText;
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<div class="loading-spinner"></div>Accesso in corso...';
+
+      try {
+        const response = await inviaRichiesta('POST', '/api/login', { username, password });
+        if (response.status === 200) {
+          const data = response.data;
+          console.log('Login riuscito:', data);
+          localStorage.setItem('token', data.token);
+          
+          // Store user information
+          if (data.username) {
+            localStorage.setItem('username', data.username);
+          }
+          if (data.role) {
+            localStorage.setItem('userRole', data.role);
+          }
+          
+          // Controlla se l'utente deve cambiare password
+          if (data.deveCambiarePassword) {
+            window.location.href = '/cambiaPassword.html';
+          } else {
+            window.location.href = '/home.html';
+          }
+        } else {
+          const errorMsg = response.data?.message || response.error || 'Credenziali errate';
+          document.getElementById('login-error-message').innerText = errorMsg;
+        }
+      } catch (err) {
+        console.error('Errore durante il login:', err.message);
+        document.getElementById('login-error-message').innerText = 'Errore di connessione al server. Riprova più tardi.';
+      } finally {
+        // Restore button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    });
+    
+    // Registration form handling with improved error handling
+    const registerForm = document.getElementById('registerForm');
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Clear previous error messages
+      document.getElementById('register-error-message').innerText = '';
+      
+      // Show loading indicator
+      const submitButton = registerForm.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerText;
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<div class="loading-spinner"></div>Registrazione in corso...';
+      
+      const formData = new FormData(registerForm);
+      const username = formData.get('username');
+      const password = formData.get('password');
+      const confirmPassword = formData.get('confirmPassword');
+      
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        document.getElementById('register-error-message').innerText = 'Le password non coincidono';
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        return;
+      }
+      
+      // Validate password length (assuming your server requires this)
+      if (password.length < 6) {
+        document.getElementById('register-error-message').innerText = 'La password deve essere di almeno 6 caratteri';
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        return;
+      }
+      
+      try {
+        // Send registration data in the format expected by the server
+        const registerData = {
+          username: username,
+          password: password,
+          ruolo: 'operatore',
+          deveCambiarePassword: true
+        };
+        
+        // Instead of using inviaRichiesta, let's do a direct fetch with detailed error handling
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(registerData)
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          data = { message: await response.text() };
+        }
+        
+        if (response.ok) {
+          // Registration successful
+          console.log('Registrazione completata:', data);
+          
+          // Now attempt login
+          try {
+            const loginResult = await fetch('/api/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ username, password })
+            });
+            
+            if (loginResult.ok) {
+              const loginData = await loginResult.json();
+              localStorage.setItem('token', loginData.token);
+              
+              if (loginData.username) {
+                localStorage.setItem('username', loginData.username);
+              }
+              if (loginData.role) {
+                localStorage.setItem('userRole', loginData.role);
+              }
+              
+              // Redirect based on password change requirement
+              if (loginData.deveCambiarePassword) {
+                window.location.href = '/cambiaPassword.html';
+              } else {
+                window.location.href = '/home.html';
+              }
+            } else {
+              // Login failed after successful registration
+              document.getElementById('register-error-message').innerText = 
+                'Registrazione avvenuta correttamente, ma errore nell\'accesso automatico. Procedere con il login manuale.';
+              document.getElementById('loginTab').click();
+            }
+          } catch (loginErr) {
+            // Handle login network errors
+            document.getElementById('register-error-message').innerText = 
+              'Registrazione avvenuta correttamente, ma errore nell\'accesso automatico. Procedere con il login manuale.';
+            document.getElementById('loginTab').click();
+          }
+        } else {
+          // Registration failed
+          console.error('Errore registrazione:', data);
+          document.getElementById('register-error-message').innerText = 
+            data.message || 'Errore durante la registrazione. Username potrebbe essere già in uso.';
+        }
+      } catch (err) {
+        // Network or parsing error
+        console.error('Errore di rete:', err);
+        document.getElementById('register-error-message').innerText = 
+          'Errore di connessione al server. Riprova più tardi.';
+      } finally {
+        // Restore button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    });
+  </script>
+</body>
+</html>
