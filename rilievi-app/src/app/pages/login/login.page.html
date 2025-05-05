@@ -3,6 +3,7 @@
     <ion-title>Rilievi & Perizie</ion-title>
   </ion-toolbar>
 </ion-header>
+
 <ion-content class="ion-padding">
   <div class="logo-container ion-text-center">
     <img src="assets/logo.png" alt="Logo" width="150">
@@ -16,7 +17,7 @@
       <ion-input type="text" formControlName="username" required></ion-input>
     </ion-item>
     
-    <div class="ion-padding-start" *ngIf="loginForm.get('username').invalid && loginForm.get('username').touched">
+    <div class="ion-padding-start" *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
       <ion-text color="danger">Username richiesto</ion-text>
     </div>
 
@@ -25,7 +26,7 @@
       <ion-input type="password" formControlName="password" required></ion-input>
     </ion-item>
     
-    <div class="ion-padding-start" *ngIf="loginForm.get('password').invalid && loginForm.get('password').touched">
+    <div class="ion-padding-start" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
       <ion-text color="danger">Password richiesta</ion-text>
     </div>
 

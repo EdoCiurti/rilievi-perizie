@@ -1,8 +1,7 @@
-import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 
-const routes: Routes = [
+export const routes: Routes = [
   {
     path: '',
     redirectTo: 'login',
@@ -10,29 +9,22 @@ const routes: Routes = [
   },
   {
     path: 'login',
-    loadChildren: () => import('./pages/login/login.module').then( m => m.LoginPageModule)
+    // Cambia loadChildren a loadComponent per componenti standalone
+    loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage)
   },
   {
     path: 'home',
-    loadChildren: () => import('./pages/home/home.module').then( m => m.HomePageModule),
+    loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
     canActivate: [AuthGuard]
   },
   {
     path: 'nuova-perizia',
-    loadChildren: () => import('./pages/nuova-perizia/nuova-perizia.module').then( m => m.NuovaPeriziaPageModule),
+    loadComponent: () => import('./pages/nuova-perizia/nuova-perizia.page').then(m => m.NuovaPeriziaPage),
     canActivate: [AuthGuard]
   },
   {
     path: 'dettaglio-perizia/:id',
-    loadChildren: () => import('./pages/dettaglio-perizia/dettaglio-perizia.module').then( m => m.DettaglioPeriziaPageModule),
+    loadComponent: () => import('./pages/dettaglio-perizia/dettaglio-perizia.page').then(m => m.DettaglioPeriziaPage),
     canActivate: [AuthGuard]
   }
 ];
-
-@NgModule({
-  imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
-  ],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }

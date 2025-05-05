@@ -12,6 +12,7 @@ const API_URL = 'https://rilievi-perizie.onrender.com/api';
   providedIn: 'root'
 })
 export class PerizieService {
+  [x: string]: any;
   constructor(
     private http: HttpClient, 
     private authService: AuthService,
@@ -76,4 +77,23 @@ export class PerizieService {
       throw error;
     }
   }
+  // Aggiungi questo metodo alla classe PerizieService
+
+eliminaPerizia(id: string): Observable<any> {
+  return from(this.authService.getToken()).pipe(
+    switchMap(token => {
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      return this.http.delete(`${API_URL}/perizie/${id}`, { headers });
+    })
+  );
+}
+
+aggiornaStatoPerizia(id: string, stato: string): Promise<any> {
+  return from(this.authService.getToken()).pipe(
+    switchMap(token => {
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      return this.http.patch(`${API_URL}/perizie/${id}/stato`, { stato }, { headers });
+    })
+  ).toPromise();
+}
 }

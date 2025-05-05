@@ -1,13 +1,88 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>nuova-perizia</ion-title>
+
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Nuova Perizia</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">nuova-perizia</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding">
+  <form [formGroup]="periziaForm" (ngSubmit)="inviaPeriza()">
+    <ion-item>
+      <ion-label position="floating">Descrizione</ion-label>
+      <ion-textarea formControlName="descrizione" rows="3"></ion-textarea>
+    </ion-item>
+    <div class="validation-error" *ngIf="periziaForm.get('descrizione')?.invalid && periziaForm.get('descrizione')?.touched">
+      <ion-text color="danger">La descrizione è obbligatoria</ion-text>
+    </div>
+
+    <ion-item>
+      <ion-label position="floating">Cliente</ion-label>
+      <ion-input formControlName="cliente"></ion-input>
+    </ion-item>
+    <div class="validation-error" *ngIf="periziaForm.get('cliente')?.invalid && periziaForm.get('cliente')?.touched">
+      <ion-text color="danger">Il cliente è obbligatorio</ion-text>
+    </div>
+
+    <ion-item>
+      <ion-label position="floating">Indirizzo</ion-label>
+      <ion-input formControlName="indirizzo"></ion-input>
+    </ion-item>
+    <div class="validation-error" *ngIf="periziaForm.get('indirizzo')?.invalid && periziaForm.get('indirizzo')?.touched">
+      <ion-text color="danger">L'indirizzo è obbligatorio</ion-text>
+    </div>
+
+    <div class="foto-section ion-margin-top">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Fotografie</ion-card-title>
+          <ion-card-subtitle>
+            Aggiungi foto alla perizia
+          </ion-card-subtitle>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <ion-button expand="block" (click)="aggiungiImmagine()" color="secondary">
+            <ion-icon name="camera-outline" slot="start"></ion-icon>
+            Scatta foto
+          </ion-button>
+          
+          <ion-grid *ngIf="fotoService.photos.length > 0">
+            <ion-row>
+              <ion-col size="6" *ngFor="let foto of fotoService.photos; let i = index">
+                <ion-card class="foto-card">
+                  <img [src]="foto.webviewPath" alt="Foto perizia">
+                  <ion-card-content>
+                    <ion-item lines="none">
+                      <ion-label position="floating">Commento</ion-label>
+                      <ion-input [(ngModel)]="foto.commento" [ngModelOptions]="{standalone: true}"></ion-input>
+                    </ion-item>
+                    <ion-button expand="block" fill="clear" color="danger" (click)="rimuoviFoto(i)">
+                      <ion-icon name="trash" slot="start"></ion-icon>
+                      Rimuovi
+                    </ion-button>
+                  </ion-card-content>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+          
+          <div *ngIf="fotoService.photos.length === 0" class="ion-text-center ion-padding">
+            <ion-icon name="images-outline" color="medium" style="font-size: 48px;"></ion-icon>
+            <p>Nessuna foto aggiunta</p>
+            <p>Scatta almeno una foto per creare la perizia</p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div class="ion-padding-top">
+      <ion-button type="submit" expand="block" [disabled]="periziaForm.invalid || isSubmitting || fotoService.photos.length === 0">
+        <ion-spinner name="dots" *ngIf="isSubmitting"></ion-spinner>
+        <span *ngIf="!isSubmitting">Crea Perizia</span>
+      </ion-button>
+    </div>
+  </form>
 </ion-content>
