@@ -1,0 +1,7 @@
+{
+  "name": "rilievi-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
