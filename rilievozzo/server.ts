@@ -429,7 +429,7 @@ app.get('/api/perizie/:id', authenticateToken, async (req: any, res: any) => {
 });
 
 // Endpoint per creare una nuova perizia con immagini
-app.post('/api/perizie', authenticateToken, upload.array('immagini', 10), async (req: any, res: any) => {
+app.post('/api/perizie', authenticateToken, (upload.array('immagini', 10) as any), async (req: any, res: any) => {
   try {
     const { descrizione, cliente, stato, indirizzo } = req.body;
     let coordinate = [];
@@ -492,7 +492,7 @@ app.post('/api/perizie', authenticateToken, upload.array('immagini', 10), async 
 });
 
 // Endpoint per aggiornare una perizia
-app.put('/api/perizie/:id', authenticateToken, upload.array('immagini'), async (req:any, res:any) => {
+app.put('/api/perizie/:id', authenticateToken, upload.array('immagini') as any, async (req:any, res:any) => {
   try {
     const { id } = req.params;
     const { descrizione, cliente, indirizzo, stato, operatore } = req.body;
@@ -581,7 +581,7 @@ app.put('/api/perizie/:id', authenticateToken, upload.array('immagini'), async (
     
   } catch (error) {
     console.error('Errore nell\'aggiornamento della perizia:', error);
-    res.status(500).send(error.message || 'Errore durante la modifica della perizia');
+    res.status(500).send(error instanceof Error ? error.message : 'Errore durante la modifica della perizia');
   }
 });
 
@@ -883,7 +883,7 @@ app.get('/api/protectedData', authenticateToken, (req, res) => {
 });
 
 
-app.put('/api/perizie/modifica', authenticateToken, upload.array('immagini'), async (req: any, res: any): Promise<void> => {
+app.put('/api/perizie/modifica', authenticateToken, upload.array('immagini') as any, async (req: any, res: any): Promise<void> => {
   try {
     const { id, descrizione, cliente, indirizzo, stato, immaginiDaEliminare } = req.body;
     
