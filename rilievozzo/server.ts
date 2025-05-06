@@ -6,7 +6,7 @@ import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import path from 'path';
 import multer from 'multer';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const jwt = require('jsonwebtoken');
 import { MongoClient, ObjectId } from 'mongodb';
