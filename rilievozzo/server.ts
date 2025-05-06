@@ -2,7 +2,7 @@ import http from 'http';
 import url from 'url';
 import fs from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import fileUpload from 'express-fileupload';
 import path from 'path';
 import multer from 'multer';
@@ -69,27 +69,13 @@ app.use((req, res, next) => {
   next();
 });
 
-const whitelist = [
-  'http://my-crud-server.herokuapp.com',
-  'https://my-crud-server.herokuapp.com',
-  'http://localhost:3000',
-  'https://localhost:3001',
-  'http://localhost:4200',
-  'https://cordovaapp'
-];
+app.use(cors({
+  origin: true, // Consente richieste da qualsiasi origine
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'admin-password', 'Admin-Password']
+}));
 
-const corsOptions = {
-  origin: (origin: any, callback: any) => {
-    if (!origin || whitelist.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-};
-
-app.use(cors(corsOptions));
 
 function authenticateToken(req: any, res: any, next: any) {
   const authHeader = req.headers['authorization'];
