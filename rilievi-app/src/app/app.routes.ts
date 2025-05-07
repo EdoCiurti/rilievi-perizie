@@ -25,5 +25,10 @@ export const routes: Routes = [
     path: 'dettaglio-perizia/:id',
     loadComponent: () => import('./pages/dettaglio-perizia/dettaglio-perizia.page').then(m => m.DettaglioPeriziaPage),
     canActivate: [AuthGuard]
+  },
+  // Aggiungi un percorso wildcard per catturare percorsi non validi
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 ];

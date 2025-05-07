@@ -1,169 +1,170 @@
 import { Injectable } from '@angular/core';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Storage } from '@ionic/storage-angular';
-import { Platform, AlertController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
+import { ActionSheetController, Platform, AlertController } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FotoService {
-  public photos: UserPhoto[] = [];
+  public photos: any[] = [];
   
-  constructor(private platform: Platform, private storage: Storage, private alertController: AlertController) {}
-
-  // Nuovo metodo per mostrare le opzioni
-  async scegliSorgenteFoto(): Promise<UserPhoto | null> {
+  constructor(
+    private actionSheetController: ActionSheetController,
+    private platform: Platform,
+    private alertController: AlertController
+  ) {}
+  
+  async scegliSorgenteFoto() {
+    // Richiedi permessi esplicitamente prima di mostrare le opzioni
+    await this.requestCameraPermissions();
+    
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Seleziona fonte immagine',
+      buttons: [
+        {
+          text: 'Fotocamera',
+          icon: 'camera',
+          handler: async () => {
+            // Chiamata asincrona e attesa risultato
+            const photo = await this.scattaFoto(CameraSource.Camera);
+            actionSheet.dismiss(photo);
+            return true;
+          }
+        },
+        {
+          text: 'Galleria',
+          icon: 'image',
+          handler: async () => {
+            // Chiamata asincrona e attesa risultato
+            const photo = await this.scattaFoto(CameraSource.Photos);
+            actionSheet.dismiss(photo);
+            return true;
+          }
+        },
+        {
+          text: 'Annulla',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+    
+    await actionSheet.present();
+    
+    // Attendi esplicitamente la chiusura dell'action sheet
+    const { data } = await actionSheet.onDidDismiss();
+    console.log("Action sheet dismissed with data:", data);
+    return data;
+  }
+  
+  // Nuova funzione per richiesta esplicita di permessi
+  async requestCameraPermissions() {
     try {
-      // Verifica i permessi prima di procedere
-      await Camera.checkPermissions();
-      
-      // Prepara le opzioni per la fotocamera
-      const options = {
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.Uri,
-        promptLabelHeader: 'Seleziona sorgente',
-        promptLabelCancel: 'Annulla',
-        promptLabelPhoto: 'Dalla galleria',
-        promptLabelPicture: 'Scatta foto'
-      };
-      
-      // Chiedi all'utente se vuole usare la fotocamera o la galleria
-      const source = await this.presentSourceChoice();
-      
-      if (!source) return null; // L'utente ha annullato
-      
-      // Cattura l'immagine dalla sorgente selezionata
-      const image = await Camera.getPhoto({
-        ...options,
-        source: source
+      // Richiedi permessi per fotocamera e galleria
+      const permissions = await Camera.requestPermissions({
+        permissions: ['camera', 'photos']
       });
       
-      // Processa la foto e aggiungila all'array
-      const newPhoto = await this.savePhoto(image);
-      return newPhoto;
+      console.log('Permessi fotocamera:', permissions);
+      
+      // Se i permessi sono negati, mostra un alert
+      if (permissions.camera !== 'granted') {
+        await this.showPermissionAlert();
+      }
+      
+      return permissions;
     } catch (error) {
-      console.error('Errore durante l\'acquisizione della foto', error);
+      console.error('Errore richiesta permessi:', error);
       return null;
     }
   }
   
-  // Helper per mostrare la scelta tra fotocamera e galleria
-  private async presentSourceChoice(): Promise<CameraSource | null> {
-    return new Promise(async (resolve) => {
-      const alert = await this.alertController.create({
-        header: 'Scegli sorgente',
-        buttons: [
-          {
-            text: 'Annulla',
-            role: 'cancel',
-            handler: () => resolve(null)
-          },
-          {
-            text: 'Fotocamera',
-            handler: () => resolve(CameraSource.Camera)
-          },
-          {
-            text: 'Galleria',
-            handler: () => resolve(CameraSource.Photos)
-          }
-        ]
+  async scattaFoto(source: CameraSource) {
+    try {
+      console.log(`Apertura ${source === CameraSource.Camera ? 'fotocamera' : 'galleria'}...`);
+      
+      // Opzioni migliorate per la fotocamera
+      const capturedPhoto = await Camera.getPhoto({
+        resultType: CameraResultType.Uri,
+        source: source,
+        quality: 75,
+        saveToGallery: true,
+        correctOrientation: true,
+        width: 1080,
+        promptLabelHeader: source === CameraSource.Camera ? 'Scatta una foto' : 'Scegli un\'immagine',
+        promptLabelCancel: 'Annulla'
       });
       
-      await alert.present();
-    });
-  }
-  
-  // Metodo per salvare la foto
-  private async savePhoto(photo: Photo): Promise<UserPhoto> {
-    // Converti in base64 se necessario
-    const base64Data = await this.readAsBase64(photo);
-    
-    // Crea un nuovo oggetto UserPhoto
-    const newPhoto: UserPhoto = {
-      commento: '',  // Aggiunto campo obbligatorio
-      filepath: new Date().getTime() + '.jpeg',
-      webviewPath: photo.webPath,
-      base64: base64Data
-    };
-    
-    // Aggiungi all'array
-    this.photos.unshift(newPhoto);
-    
-    return newPhoto;
-  }
-  
-  // Metodo per convertire in base64
-  private async readAsBase64(photo: Photo): Promise<string> {
-    if (this.platform.is('hybrid')) {
-      const file = await Filesystem.readFile({
-          path: photo.path!,
-          encoding: 'base64'.toString() as Encoding
-        });
-      return file.data as string;
-    } else {
-      // Web: Fetch dalla webview path
-      const response = await fetch(photo.webPath!);
-      const blob = await response.blob();
-      return await this.convertBlobToBase64(blob) as string;
+      console.log('Foto acquisita:', capturedPhoto);
+      
+      // Crea l'oggetto photo solo se la foto è valida
+      if (capturedPhoto && capturedPhoto.webPath) {
+        const photoObj = {
+          filepath: capturedPhoto.path || '',
+          webPath: capturedPhoto.webPath,
+          format: capturedPhoto.format,
+          isNew: true
+        };
+        
+        this.photos.push(photoObj);
+        return photoObj;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Errore durante l\'acquisizione della foto:', error);
+      // Mostra un alert in caso di errore
+      this.showErrorAlert(error);
+      return null;
     }
   }
   
-  private convertBlobToBase64 = (blob: Blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = reject;
-      reader.onload = () => {
-        resolve(reader.result);
-      };
-      reader.readAsDataURL(blob);
+  // Alert per errori
+  private async showErrorAlert(error: any) {
+    const alert = await this.alertController.create({
+      header: 'Errore Fotocamera',
+      message: 'Si è verificato un errore durante l\'accesso alla fotocamera: ' + (error.message || error),
+      buttons: ['OK']
     });
-  };
-
-  public addCommento(index: number, commento: string) {
-    if (this.photos[index]) {
-      this.photos[index].commento = commento;
-    }
+    
+    await alert.present();
   }
-
-  async getFilesFromPhotos(): Promise<File[]> {
+  
+  // Alert per permessi negati
+  private async showPermissionAlert() {
+    const alert = await this.alertController.create({
+      header: 'Permessi Richiesti',
+      message: 'Per scattare foto, l\'app necessita dei permessi per accedere alla fotocamera. Vai nelle impostazioni del dispositivo per abilitarli.',
+      buttons: ['OK']
+    });
+    
+    await alert.present();
+  }
+  
+  async getFilesFromPhotos() {
     const files: File[] = [];
     
-    console.log('Convertendo', this.photos.length, 'foto in file');
-    
-    for (const photo of this.photos) {
-      if (photo.webviewPath) {
+    for (const photo of this.photos.filter(p => p.isNew)) {
+      if (photo.webPath) {
         try {
-          // Converti base64/webviewPath in Blob
-          const response = await fetch(photo.webviewPath);
+          const response = await fetch(photo.webPath);
           const blob = await response.blob();
           
-          // Genera un nome univoco per il file
-          const fileName = `photo_${new Date().getTime()}_${Math.floor(Math.random() * 1000)}.jpeg`;
+          const fileName = new Date().getTime() + '.jpg';
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
           
-          // Crea un File dal Blob
-          const file = new File([blob], fileName, {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          });
-          
-          console.log('File creato:', file.name, file.size, 'bytes');
           files.push(file);
-        } catch (e) {
-          console.error('Errore conversione foto in file', e);
+        } catch (error) {
+          console.error('Errore nella conversione dell\'immagine', error);
         }
       }
     }
     
     return files;
   }
-}
-
-export interface UserPhoto {
-  commento: string;
-  filepath: string;
-  webviewPath?: string;
-  base64?: string;
+  
+  resetPhotos() {
+    this.photos = [];
+  }
 }

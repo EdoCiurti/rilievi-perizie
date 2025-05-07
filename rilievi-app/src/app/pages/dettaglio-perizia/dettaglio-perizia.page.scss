@@ -1,0 +1,24 @@
+#map {
+  width: 100%;
+  height: 300px;
+  position: relative;
+  z-index: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  display: block;
+}
+
+.custom-marker-icon {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Fix per evitare problemi di z-index */
+.leaflet-pane {
+  z-index: 5 !important;
+}
+
+.leaflet-top, .leaflet-bottom {
+  z-index: 6 !important;
+}

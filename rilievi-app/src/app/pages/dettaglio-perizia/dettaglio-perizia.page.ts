@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertController, ModalController, ToastController, IonicModule } from '@ionic/angular';
 import { PerizieService } from '../../services/perizie.service';
@@ -16,11 +16,12 @@ import { Injectable } from '@angular/core';
   standalone: true,
   imports: [IonicModule, CommonModule, RouterLink]
 })
-export class DettaglioPeriziaPage implements OnInit {
+export class DettaglioPeriziaPage implements OnInit, OnDestroy {
   periziaId!: string;
   perizia: any = null;
   isLoading = false;
-  map: any;
+  map: any = null;
+  mapInitialized = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -44,25 +45,20 @@ export class DettaglioPeriziaPage implements OnInit {
 
   ionViewDidEnter() {
     if (this.perizia?.coordinate && this.perizia.coordinate.length === 2) {
-      setTimeout(() => {
-        this.initMap();
-      }, 300);
+      setTimeout(() => this.initializeMap(), 800);
     }
   }
 
   caricaPerizia() {
     this.isLoading = true;
     
-    // Usa getPeriziaById invece di getPerizie con parametro
     this.perizieService.getPeriziaById(this.periziaId).subscribe(
-      (perizia: any) => { // Ricevi direttamente l'oggetto perizia, non un array
+      (perizia: any) => {
         this.perizia = perizia;
         this.isLoading = false;
         
         if (this.perizia?.coordinate && this.perizia.coordinate.length === 2) {
-          setTimeout(() => {
-            this.initMap();
-          }, 300);
+          setTimeout(() => this.initializeMap(), 300);
         }
       },
       (error: any) => {
@@ -73,47 +69,91 @@ export class DettaglioPeriziaPage implements OnInit {
     );
   }
 
-  initMap() {
-    if (!this.perizia?.coordinate || this.perizia.coordinate.length !== 2) {
-      console.log('Coordinate non valide:', this.perizia?.coordinate);
+  initializeMap() {
+    if (this.mapInitialized) {
+      console.log('Mappa già inizializzata');
       return;
     }
-    
-    // Assicurati che 'map' sia un elemento esistente nel DOM
+
     const mapElement = document.getElementById('map');
     if (!mapElement) {
-      console.error('Elemento mappa non trovato nel DOM');
+      console.error('Elemento mappa non trovato');
       return;
     }
-    
-    // Distruggi la mappa esistente se presente
+
+    if (!this.perizia || !this.perizia.coordinate || 
+        !Array.isArray(this.perizia.coordinate) || 
+        this.perizia.coordinate.length !== 2) {
+      console.error('Coordinate non valide:', this.perizia?.coordinate);
+      return;
+    }
+
+    try {
+      const lat = parseFloat(this.perizia.coordinate[0]);
+      const lng = parseFloat(this.perizia.coordinate[1]);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        console.error('Coordinate non sono numeri validi');
+        return;
+      }
+
+      console.log('Inizializzazione mappa con coordinate:', lat, lng);
+
+      if (this.map) {
+        this.map.remove();
+        this.map = null;
+      }
+
+      mapElement.style.height = '300px';
+      mapElement.style.width = '100%';
+      mapElement.style.backgroundColor = '#f0f0f0';
+      mapElement.style.border = '1px solid #ccc';
+
+      setTimeout(() => {
+        this.map = L.map('map', {
+          center: [lat, lng],
+          zoom: 13,
+          zoomControl: true,
+          attributionControl: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(this.map);
+
+        const defaultIcon = L.divIcon({
+          html: `<div style="
+            background-color: #e74c3c;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+          "></div>`,
+          className: 'custom-marker-icon',
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+
+        const marker = L.marker([lat, lng], { icon: defaultIcon }).addTo(this.map);
+        marker.bindPopup(this.perizia.indirizzo || 'Posizione perizia').openPopup();
+
+        setTimeout(() => {
+          this.map.invalidateSize(true);
+        }, 300);
+
+        this.mapInitialized = true;
+      }, 500);
+      
+    } catch (error) {
+      console.error('Errore durante l\'inizializzazione della mappa:', error);
+    }
+  }
+
+  ngOnDestroy() {
     if (this.map) {
       this.map.remove();
       this.map = null;
-    }
-    
-    console.log('Inizializzazione mappa con coordinate:', this.perizia.coordinate);
-    
-    // Crea nuova mappa
-    try {
-      this.map = L.map('map').setView([this.perizia.coordinate[0], this.perizia.coordinate[1]], 15);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(this.map);
-      
-      // Aggiungi marker con popup
-      const marker = L.marker([this.perizia.coordinate[0], this.perizia.coordinate[1]])
-        .addTo(this.map)
-        .bindPopup(`<b>${this.perizia.cliente}</b><br>${this.perizia.indirizzo}`)
-        .openPopup();
-        
-      // Invalida la dimensione della mappa per forzare il render
-      setTimeout(() => {
-        this.map.invalidateSize();
-      }, 300);
-    } catch (error) {
-      console.error('Errore inizializzazione mappa:', error);
     }
   }
 
@@ -131,17 +171,14 @@ export class DettaglioPeriziaPage implements OnInit {
   }
 
   getImageUrl(img: any): string {
-    // Se l'immagine è già un URL completo
     if (img.url && img.url.startsWith('http')) {
       return img.url;
     }
     
-    // Se l'URL è un percorso relativo
     if (img.url) {
       return `https://rilievi-perizie-0ldb.onrender.com${img.url}`;
     }
     
-    // Fallback per immagini che non hanno un URL valido
     return 'assets/image-placeholder.png';
   }
 
@@ -166,16 +203,14 @@ export class DettaglioPeriziaPage implements OnInit {
     const modal = await this.modalController.create({
       component: ModificaPeriziaComponent,
       componentProps: {
-        perizia: {...this.perizia}  // Passa una copia per evitare modifiche dirette
+        perizia: {...this.perizia}
       }
     });
     
     await modal.present();
     
-    // Attendi la chiusura del modale
     const { data } = await modal.onWillDismiss();
     
-    // Se il modale ha comunicato un aggiornamento, ricarica i dati
     if (data && data.updated) {
       console.log('Perizia modificata, ricarico i dati');
       this.caricaPerizia();
@@ -218,7 +253,6 @@ Descrizione: ${this.perizia.descrizione}
       await Share.share({
         title: `Perizia: ${this.perizia.cliente || 'Perizia'} - ${this.perizia.indirizzo || ''}`,
         text: infoGenerali,
-        // Aggiorna l'URL con il nuovo dominio di Render
         url: `https://rilievi-perizie-0ldb.onrender.com/perizie/${this.periziaId}`,
         dialogTitle: 'Condividi perizia'
       });

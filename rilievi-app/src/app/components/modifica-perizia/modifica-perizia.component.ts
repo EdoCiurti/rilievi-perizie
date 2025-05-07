@@ -1,19 +1,23 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, Input, OnInit, Inject, Injector } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ModalController, ToastController, LoadingController, AlertController, IonicModule } from '@ionic/angular';
 import { PerizieService } from '../../services/perizie.service';
 import { FotoService } from '../../services/foto.service';
 import { GeolocationService } from '../../services/geolocation.service';
 import { GeocodingService } from '../../services/geocoding.service';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-modifica-perizia',
   templateUrl: './modifica-perizia.component.html',
   styleUrls: ['./modifica-perizia.component.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, ReactiveFormsModule, FormsModule]
+  imports: [
+    IonicModule, 
+    CommonModule, 
+    ReactiveFormsModule, 
+    FormsModule
+  ]
 })
 export class ModificaPeriziaComponent implements OnInit {
   @Input() perizia: any;
@@ -22,6 +26,8 @@ export class ModificaPeriziaComponent implements OnInit {
   immaginiDaEliminare: string[] = [];
   isLoading = false;
   
+  private _fotoService: FotoService | null = null;
+  
   constructor(
     private formBuilder: FormBuilder,
     private modalController: ModalController,
@@ -29,18 +35,37 @@ export class ModificaPeriziaComponent implements OnInit {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
-    public fotoService: FotoService,
     private geoService: GeolocationService,
-    private geocodingService: GeocodingService
+    private geocodingService: GeocodingService,
+    private injector: Injector
   ) {}
   
+  // Usa un getter per accedere lazy al servizio, interrompendo la dipendenza circolare
+  get fotoService(): FotoService {
+    if (!this._fotoService) {
+      this._fotoService = this.injector.get(FotoService);
+    }
+    return this._fotoService;
+  }
+  
   ngOnInit() {
+    // Inizializza il form e prepara i dati
+    this.initForm();
+    
+    // Salva le immagini originali
+    if (this.perizia && this.perizia.immagini) {
+      this.immaginiOriginali = [...this.perizia.immagini];
+    }
+    
+    // Resetta le foto nel servizio
+    this.fotoService.resetPhotos();
+  }
+  
+  private initForm() {
     if (!this.perizia) {
       this.closeModal();
       return;
     }
-    
-    this.immaginiOriginali = [...(this.perizia.immagini || [])];
     
     this.periziaForm = this.formBuilder.group({
       descrizione: [this.perizia.descrizione, Validators.required],
@@ -51,7 +76,6 @@ export class ModificaPeriziaComponent implements OnInit {
     });
     
     console.log('Form inizializzato con dati perizia:', this.periziaForm.value);
-    console.log('Immagini originali:', this.immaginiOriginali);
   }
   
   closeModal(updated = false) {
@@ -61,9 +85,23 @@ export class ModificaPeriziaComponent implements OnInit {
   }
   
   async aggiungiImmagine() {
-    const photo = await this.fotoService.scegliSorgenteFoto();
-    if (photo) {
-      console.log('Nuova foto aggiunta:', photo);
+    try {
+      console.log('Inizio aggiunta immagine');
+      
+      // Attendi esplicitamente la richiesta dei permessi
+      await this.fotoService.requestCameraPermissions();
+      
+      // Attendi il risultato dell'azione
+      const photo = await this.fotoService.scegliSorgenteFoto();
+      
+      // Controlla esplicitamente il risultato
+      if (photo) {
+        console.log('Immagine aggiunta con successo:', photo);
+      } else {
+        console.log('Nessuna immagine selezionata o errore acquisizione');
+      }
+    } catch (error) {
+      console.error('Errore durante l\'aggiunta dell\'immagine:', error);
     }
   }
   

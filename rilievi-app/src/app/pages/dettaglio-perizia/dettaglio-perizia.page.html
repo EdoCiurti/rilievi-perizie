@@ -72,12 +72,13 @@
     </ion-button>
 
     <!-- Mappa -->
-    <ion-card *ngIf="perizia.coordinate && perizia.coordinate.length === 2">
+    <ion-card *ngIf="perizia?.coordinate && perizia.coordinate.length === 2">
       <ion-card-header>
         <ion-card-subtitle>Posizione</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
-        <div id="map" style="height: 200px;"></div>
+        <!-- Assicurati che il div abbia un ID univoco -->
+        <div id="map" class="map-container"></div>
       </ion-card-content>
     </ion-card>
 

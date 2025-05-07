@@ -25,6 +25,9 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
+/* Assicurati che i CSS di Leaflet siano importati correttamente */
+@import "leaflet/dist/leaflet.css";
+
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------
@@ -34,7 +37,7 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+// @import '@ionic/angular/css/palettes/dark.system.css';
 
 /* Fix per problemi di input su mobile e touch */
 :root {
@@ -42,43 +45,123 @@
     --ion-safe-area-bottom: env(safe-area-inset-bottom);
     --ion-safe-area-left: env(safe-area-inset-left);
     --ion-safe-area-right: env(safe-area-inset-right);
-  }
-  
-  /* Fix touch inputs su Android */
-  input, 
-  ion-input, 
-  ion-textarea, 
-  ion-select, 
-  ion-datetime, 
-  ion-searchbar,
-  button,
-  ion-button {
+
+    /* Tema chiaro forzato per garantire visibilità su mobile */
+    --ion-background-color: #ffffff;
+    --ion-background-color-rgb: 255,255,255;
+    --ion-text-color: #000000;
+    --ion-text-color-rgb: 0,0,0;
+
+    /* Fix per input e controlli */
+    ion-item {
+      --background: #ffffff;
+      --border-color: #d7d7d7;
+      --highlight-height: 2px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    ion-input, ion-textarea, ion-select, ion-datetime {
+      --background: #ffffff;
+      --color: #000000;
+      --placeholder-color: #999999;
+      --placeholder-opacity: 0.8;
+      --padding-top: 10px;
+      --padding-bottom: 10px;
+      --padding-start: 10px !important;
+      --padding-end: 10px !important;
+      font-size: 16px;
+    }
+
+    ion-card {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      border-radius: 12px !important;
+      margin: 16px !important;
+    }
+
+    ion-button {
+      --border-radius: 8px;
+      --box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      font-weight: 500;
+      height: 48px;
+      margin: 16px 0;
+    }
+}
+
+/* Fix touch inputs su Android */
+input, 
+ion-input, 
+ion-textarea, 
+ion-select, 
+ion-datetime, 
+ion-searchbar,
+button,
+ion-button {
     cursor: pointer !important;
     touch-action: manipulation !important;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-  }
-  
-  /* Migliora target area per touch su Android */
-  ion-item, 
-  ion-button, 
-  button, 
-  a[role="button"] {
+}
+
+/* Migliora target area per touch su Android */
+ion-item, 
+ion-button, 
+button, 
+a[role="button"] {
     min-height: 44px;
-  }
-  
-  /* Assicurati che i font siano visibili */
-  * {
+}
+
+/* Assicurati che i font siano visibili */
+* {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  
-  /* Per evitare problemi con keyboard su Android */
-  ion-content {
+}
+
+/* Per evitare problemi con keyboard su Android */
+ion-content {
     --keyboard-offset: 0 !important;
-  }
-  
-  /* Fix per problemi di scorrimento */
-  .ion-page {
+    --background: #f5f5f5 !important;
+}
+
+/* Fix per problemi di scorrimento */
+.ion-page {
     overscroll-behavior: none;
     contain: layout style;
-  }
+    background-color: #f5f5f5;
+}
+
+/* Rimuovi schemi di tema scuro */
+body {
+    background-color: #ffffff !important; 
+}
+
+// Aggiungi questo per assicurarti che gli input siano visibili
+ion-input, ion-textarea, ion-select, ion-datetime {
+    --background: #ffffff;
+    --color: #000000;
+    --placeholder-color: #999999;
+    --placeholder-opacity: 0.8;
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+    --padding-start: 10px !important;
+    --padding-end: 10px !important;
+    margin-bottom: 15px;
+    border-radius: 8px !important;
+    border: 1px solid #d7d7d7 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+// Se l'app è in modalità scura, aggiungi anche questo
+@media (prefers-color-scheme: dark) {
+    ion-input, ion-textarea, ion-select {
+      --background: #1e1e1e;
+      --color: #ffffff;
+      --placeholder-color: #cccccc;
+      border: 1px solid #444444;
+    }
+}
+
+ion-item {
+    --background: transparent !important;
+}

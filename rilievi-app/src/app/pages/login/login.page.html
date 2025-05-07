@@ -5,46 +5,50 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <div class="logo-container ion-text-center">
-    <img src="assets/logo.png" alt="Logo" width="150">
-    <h1>Rilievi & Perizie</h1>
-    <p>Accedi per iniziare</p>
+  <div class="login-box">
+    <div class="logo-container">
+      <img src="assets/icon/favicon.png" alt="Logo" class="logo">
+      <h2>Accedi all'applicazione</h2>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <!-- Campo Username con bordi molto visibili -->
+      <div class="input-field">
+        <label>Username</label>
+        <input type="text" formControlName="username" placeholder="Inserisci username">
+      </div>
+      
+      <!-- Campo Password con bordi molto visibili -->
+      <div class="input-field">
+        <label>Password</label>
+        <input type="password" formControlName="password" placeholder="Inserisci password">
+      </div>
+      
+      <!-- Pulsante grande e ben visibile -->
+      <button type="submit" class="login-button" [disabled]="loginForm.invalid">
+        ACCEDI
+      </button>
+    </form>
   </div>
-
-  <form [formGroup]="loginForm" (ngSubmit)="login()">
-    <ion-item>
-      <ion-label position="floating">Username</ion-label>
-      <ion-input type="text" formControlName="username" required></ion-input>
-    </ion-item>
-    
-    <div class="ion-padding-start" *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-      <ion-text color="danger">Username richiesto</ion-text>
-    </div>
-
-    <ion-item>
-      <ion-label position="floating">Password</ion-label>
-      <ion-input type="password" formControlName="password" required></ion-input>
-    </ion-item>
-    
-    <div class="ion-padding-start" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-      <ion-text color="danger">Password richiesta</ion-text>
-    </div>
-
-    <div class="ion-padding-top" *ngIf="errorMessage">
-      <ion-text color="danger">
-        <p class="ion-text-center">{{ errorMessage }}</p>
-      </ion-text>
-    </div>
-
-    <div class="ion-padding-top">
-      <ion-button type="submit" expand="block" [disabled]="loginForm.invalid || isLoading">
-        <ion-spinner name="dots" *ngIf="isLoading"></ion-spinner>
-        <span *ngIf="!isLoading">Accedi</span>
-      </ion-button>
-    </div>
-    
-    <div class="ion-text-center ion-padding-top" *ngIf="!isLoading">
-      <p>Usa le credenziali fornite dal tuo amministratore</p>
-    </div>
-  </form>
 </ion-content>
+
+<style>
+  .logo-container {
+    text-align: center;
+    margin-bottom: 30px;
+    margin-top: 20px;
+  }
+  .logo {
+    max-width: 100px;
+    margin-bottom: 20px;
+  }
+  .error-message {
+    color: var(--ion-color-danger);
+    font-size: 0.8rem;
+    margin: 5px 0 15px 16px;
+  }
+  .error-container {
+    text-align: center;
+    margin-top: 20px;
+  }
+</style>

@@ -31,12 +31,51 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               {
-                "glob": "*/",
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "styles": [
+              "src/theme/variables.scss",
+              "src/global.scss",
+              {
+                "input": "node_modules/@ionic/angular/css/core.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/normalize.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/structure.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/typography.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/padding.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/float-elements.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/text-alignment.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/text-transformation.css",
+                "inject": true
+              },
+              {
+                "input": "node_modules/@ionic/angular/css/flex-utils.css",
+                "inject": true
+              }
+            ],
             "scripts": [],
             "browser": "src/main.ts"
           },
@@ -105,7 +144,7 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               {
-                "glob": "*/",
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
               }
