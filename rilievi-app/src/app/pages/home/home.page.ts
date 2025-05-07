@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AlertController, IonicModule, RefresherCustomEvent } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { PerizieService } from '../../services/perizie.service';
@@ -11,10 +11,10 @@ import { Perizia } from '../models/perizia.models';
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule]
+  imports: [IonicModule, CommonModule, RouterLink] 
 })
 export class HomePage implements OnInit {
-  perizie: any[] = [];
+  perizie: Perizia[] = [];
   isLoading = false;
 
   constructor(
@@ -26,6 +26,9 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     this.caricaPerizie();
+    
+    // Aggiungi un controllo di connessione al server
+    this.checkServerConnection();
   }
 
   ionViewWillEnter() {
@@ -36,19 +39,41 @@ export class HomePage implements OnInit {
   caricaPerizie() {
     this.isLoading = true;
     this.perizieService.getPerizie().subscribe(
-      (data) => {
+      (data: Perizia[]) => {
         this.perizie = data;
         this.isLoading = false;
       },
       (error) => {
         console.error('Errore caricamento perizie', error);
         this.isLoading = false;
+        this.presentErrorToast('Impossibile caricare le perizie');
       }
     );
   }
 
+  checkServerConnection() {
+    // Opzionale: verifica che il server risponda prima di procedere
+    this.perizieService.checkServerStatus().subscribe(
+      () => console.log('Server connesso correttamente'),
+      error => {
+        console.error('Problemi di connessione al server', error);
+        this.presentErrorToast('Problemi di connessione al server');
+      }
+    );
+  }
+
+  async presentErrorToast(message: string = 'Si è verificato un errore') {
+    const toast = document.createElement('ion-toast');
+    toast.message = message;
+    toast.duration = 2000;
+    toast.color = 'danger';
+    toast.position = 'bottom';
+    document.body.appendChild(toast);
+    await toast.present();
+  }
+
   doRefresh(event: RefresherCustomEvent) {
-    this.perizieService.getPerizie().subscribe(
+    this.perizieService.getPerizie().subscribe( // Rimuovi il parametro stringa vuota
       (data: Perizia[]) => {
         this.perizie = data;
         event.target.complete();
@@ -102,10 +127,9 @@ export class HomePage implements OnInit {
 
     await alert.present();
   }
-
   eliminaPerizia(id: string) {
     this.isLoading = true;
-    this.perizieService['eliminaPerizia'](id).subscribe(
+    this.perizieService.eliminaPerizia(id).subscribe(
       () => {
         this.perizie = this.perizie.filter(p => p._id !== id);
         this.isLoading = false;
@@ -117,25 +141,8 @@ export class HomePage implements OnInit {
     );
   }
 
-  async logout() {
-    const alert = await this.alertController.create({
-      header: 'Logout',
-      message: 'Sei sicuro di voler uscire?',
-      buttons: [
-        {
-          text: 'Annulla',
-          role: 'cancel'
-        },
-        {
-          text: 'Esci',
-          handler: async () => {
-            await this.authService.logout();
-            this.router.navigateByUrl('/login', { replaceUrl: true });
-          }
-        }
-      ]
-    });
-
-    await alert.present();
+  logout() {
+    this.authService.logout();
+    this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 }

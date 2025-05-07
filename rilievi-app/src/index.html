@@ -1,26 +1,182 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it" class="md"><!-- Forza Material Design mode -->
 
 <head>
   <meta charset="utf-8" />
-  <title>Ionic App</title>
+  <title>Rilievi & Perizie</title>
 
   <base href="/" />
 
-  <meta name="color-scheme" content="light dark" />
+  <!-- Forza modalità luce -->
+  <meta name="color-scheme" content="light" />
   <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
 
+  <!-- Supporto touch migliorato -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-touch-fullscreen" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
   <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
 
-  <!-- add to homescreen for ios -->
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <style>
+    /* CORREZIONE DISPLAY METÀ BIANCO METÀ NERO */
+    :root {
+      --ion-color-primary: #3880ff;
+      --ion-color-primary-rgb: 56,128,255;
+      --ion-color-primary-contrast: #ffffff;
+      --ion-background-color: #ffffff !important;
+      --ion-background-color-rgb: 255,255,255 !important;
+      --ion-text-color: #000000 !important;
+      --ion-text-color-rgb: 0,0,0 !important;
+      --ion-item-background: #ffffff !important;
+    }
+    
+    /* Forza tema chiaro */
+    html, body {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    
+    ion-app {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    
+    ion-content {
+      --background: #ffffff !important;
+      --color: #000000 !important;
+    }
+    
+    /* Fissa z-index e visibilità */
+    .ion-page {
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 100 !important;
+      overflow: initial !important;
+    }
+    
+    /* Migliora input e pulsanti */
+    ion-input, ion-item, input, button, ion-button {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      z-index: 1000 !important;
+      touch-action: auto !important;
+    }
+    
+    /* Stile form login */
+    .auth-form {
+      margin: 20px;
+    }
+    
+    /* Rimuovi metà nera/bianca */
+    div[style*="background-color: rgb(0, 0, 0)"],
+    div[style*="background-color: black"] {
+      background-color: white !important;
+    }
+  </style>
 </head>
 
 <body>
   <app-root></app-root>
-</body>
 
+  <!-- LOGIN DI EMERGENZA VISIBILE -->
+  <div id="emergency-login-form" style="
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: white; 
+    z-index: 10000;
+    padding: 20px;
+  ">
+    <h2 style="text-align: center; margin-top: 40px;">Accedi</h2>
+    <div style="padding: 20px;">
+      <div style="margin-bottom: 15px;">
+        <label for="emergency-username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
+        <input id="emergency-username" type="text" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label for="emergency-password" style="display: block; margin-bottom: 5px; font-weight: bold;">Password</label>
+        <input id="emergency-password" type="password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+      
+      <button id="emergency-login-button" style="
+        width: 100%; 
+        padding: 14px; 
+        background: #3880ff; 
+        color: white; 
+        border: none; 
+        border-radius: 4px;
+        margin-top: 20px;
+        font-weight: bold;
+      ">ACCEDI</button>
+    </div>
+  </div>
+  
+  <script>
+    // Rileva quando l'app è caricata
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM caricato');
+      
+      // Abilita eventi touch
+      document.addEventListener('touchstart', function() {}, {passive: true});
+      
+      // Mostra login di emergenza dopo 3 secondi se non c'è già un login
+      setTimeout(function() {
+        var loginPage = document.querySelector('ion-content ion-input');
+        var routerOutlet = document.querySelector('ion-router-outlet');
+        
+        // Se non c'è login o non c'è router outlet, mostra il login di emergenza
+        if (!loginPage || !routerOutlet) {
+          console.log('Mostrando login di emergenza');
+          document.getElementById('emergency-login-form').style.display = 'block';
+          
+          // Aggiungi evento al pulsante di login
+          document.getElementById('emergency-login-button').addEventListener('click', function() {
+            var username = document.getElementById('emergency-username').value;
+            var password = document.getElementById('emergency-password').value;
+            alert('Hai tentato di accedere con: ' + username);
+          });
+        } else {
+          // Fix tutti gli elementi esistenti
+          fixAllInputElements();
+        }
+      }, 3000);
+      
+      // Funzione per correggere tutti gli elementi di input
+      function fixAllInputElements() {
+        var inputs = document.querySelectorAll('ion-input, input');
+        inputs.forEach(function(input) {
+          input.style.visibility = 'visible';
+          input.style.opacity = '1';
+          input.style.pointerEvents = 'auto';
+          input.addEventListener('click', function(e) {
+            if (e.target.tagName === 'ION-INPUT') {
+              var nativeInput = e.target.querySelector('input');
+              if (nativeInput) nativeInput.focus();
+            } else {
+              e.target.focus();
+            }
+          });
+        });
+        
+        var buttons = document.querySelectorAll('ion-button, button');
+        buttons.forEach(function(btn) {
+          btn.style.visibility = 'visible';
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+        });
+      }
+      
+      // Esegui periodicamente per assicurarsi che gli input siano visibili
+      setInterval(fixAllInputElements, 1000);
+    });
+  </script>
+</body>
 </html>

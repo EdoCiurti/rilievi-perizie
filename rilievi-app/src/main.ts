@@ -1,44 +1,88 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
 import { routes } from './app/app.routes';
-import { provideIonicAngular } from '@ionic/angular/standalone';
-import { provideHttpClient } from '@angular/common/http';
-import { APP_INITIALIZER, importProvidersFrom } from '@angular/core';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { APP_INITIALIZER, enableProdMode, importProvidersFrom, isDevMode } from '@angular/core';
 import { IonicStorageModule, Storage } from '@ionic/storage-angular';
 import { DatabaseService } from './app/services/database.service';
+import { Capacitor } from '@capacitor/core';
+import { Drivers } from '@ionic/storage';
 
-// Funzione di inizializzazione per Storage con gestione errori
+// Se l'app è in esecuzione in un ambiente nativo, abilita la modalità produzione
+if (Capacitor.isNativePlatform() && !isDevMode()) {
+  enableProdMode();
+}
+
+// Funzione migliorata per inizializzazione Storage con retry
 function initializeStorage(storage: Storage) {
   return async () => {
     try {
+      // Prima prova a verificare se lo storage è già stato creato
+      const storageDriver = await storage.driver;
+      if (storageDriver) {
+        console.log('Storage already initialized with driver:', storageDriver);
+        return;
+      }
+      
+      // Se non è stato inizializzato, crealo
       await storage.create();
-      console.log('Storage initialized successfully');
+      console.log('Storage initialized successfully with driver:', await storage.driver);
     } catch (error) {
-      console.error('Failed to initialize storage:', error);
+      console.error('Storage initialization error:', error);
+      
+      // Tento un approccio alternativo con un driver specifico
+      try {
+        console.log('Trying alternative storage initialization...');
+        await storage.defineDriver(Drivers.IndexedDB);
+        await storage.create();
+        console.log('Alternative storage initialization succeeded');
+      } catch (fallbackError) {
+        console.error('All storage initialization attempts failed:', fallbackError);
+      }
     }
   };
 }
 
+// Funzione migliorata per l'inizializzazione del database
 function initializeDatabase(databaseService: DatabaseService) {
-  return () => databaseService.init();
+  return async () => {
+    try {
+      await databaseService.init();
+      console.log('SQLite database initialized');
+    } catch (error) {
+      console.error('Database initialization error:', error);
+      
+      // Se l'errore è che la connessione esiste già, possiamo considerarlo un successo
+      if (error instanceof Error && error.toString().includes('already exists')) {
+        console.log('Database connection already exists, continuing...');
+        return;
+      }
+      
+      throw error;
+    }
+  };
 }
 
 bootstrapApplication(AppComponent, {
   providers: [
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideRouter(routes),
-    provideIonicAngular(),
-    provideHttpClient(),
-    // Importa IonicStorageModule con configurazione più robusta
+    provideIonicAngular({
+      mode: 'md'  // Usa Material Design per coerenza visiva
+    }),
+    provideHttpClient(withInterceptorsFromDi()),
+    
+    // Storage configurato con driver espliciti per app mobile
     importProvidersFrom(IonicStorageModule.forRoot({
       name: 'rilievi_perizie_db',
       driverOrder: [
-        'indexeddb', 
-        'localstorage', 
-        'websql',
-        'sessionStorage'
+        Drivers.IndexedDB,
+        Drivers.LocalStorage
       ]
     })),
+    
     {
       provide: APP_INITIALIZER,
       useFactory: initializeStorage,
@@ -52,4 +96,4 @@ bootstrapApplication(AppComponent, {
       multi: true
     }
   ]
-});
+}).catch(err => console.error('Errore bootstrap applicazione:', err));

@@ -1,31 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Storage } from '@ionic/storage-angular';
-import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
-import { jwtDecode } from 'jwt-decode';
-import { DatabaseService } from './database.service';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
+import { map, tap, catchError, timeout } from 'rxjs/operators';
 
-const API_URL = 'https://rilievi-perizie.onrender.com/api';
+// Costanti
 const TOKEN_KEY = 'auth-token';
-
-// Fallback storage se Ionic Storage fallisce
-class MemoryStorageFallback {
-  private data = new Map<string, any>();
-  
-  async get(key: string): Promise<any> {
-    return this.data.get(key);
-  }
-  
-  async set(key: string, value: any): Promise<any> {
-    this.data.set(key, value);
-    return value;
-  }
-  
-  async remove(key: string): Promise<void> {
-    this.data.delete(key);
-  }
-}
+const API_URL = 'https://rilievi-perizie-0ldb.onrender.com/api';
 
 @Injectable({
   providedIn: 'root'
@@ -33,105 +13,93 @@ class MemoryStorageFallback {
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser = this.currentUserSubject.asObservable();
-  private fallbackStorage = new MemoryStorageFallback();
-  private useNativeStorage = true;
   
-  constructor(
-    private http: HttpClient, 
-    private storage: Storage,
-    private databaseService: DatabaseService
-  ) {
+  constructor(private http: HttpClient) {
     this.checkToken();
   }
 
-  private async getStorage(): Promise<Storage | MemoryStorageFallback> {
-    if (this.useNativeStorage) {
-      try {
-        return this.storage;
-      } catch (error) {
-        console.warn('Fallback to memory storage');
-        this.useNativeStorage = false;
-        return this.fallbackStorage;
-      }
-    }
-    return this.fallbackStorage;
-  }
-
-  private async checkToken() {
-    try {
-      const storage = await this.getStorage();
-      const token = await storage.get(TOKEN_KEY);
-      
-      if (token) {
-        try {
-          const decoded = jwtDecode<{ exp: number }>(token);
-          const isExpired = decoded.exp < Date.now() / 1000;
-          
-          if (!isExpired) {
-            this.currentUserSubject.next(decoded);
-          } else {
-            await storage.remove(TOKEN_KEY);
-          }
-        } catch (error) {
-          console.error('Invalid token format', error);
-          await storage.remove(TOKEN_KEY);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking token', error);
+  private checkToken() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      this.currentUserSubject.next({ token });
     }
   }
 
   login(credentials: {username: string, password: string}): Observable<any> {
+    console.log('Invio credenziali al server:', API_URL);
+    
     return this.http.post(`${API_URL}/login`, credentials).pipe(
-      tap(async (response: any) => {
+      // Aggiungi un timeout di 15 secondi per evitare attese infinite
+      timeout(15000),
+      tap((response: any) => {
+        console.log('Risposta login ricevuta:', response);
         if (response && response.token) {
-          const storage = await this.getStorage();
-          await storage.set(TOKEN_KEY, response.token);
-          const decoded = jwtDecode(response.token);
-          this.currentUserSubject.next(decoded);
+          localStorage.setItem(TOKEN_KEY, response.token);
+          this.currentUserSubject.next(response);
         }
       }),
-      catchError(error => {
-        console.error('Login failed', error);
-        return of({ error: true, message: 'Login failed' });
-      })
+      catchError(this.handleError)
     );
   }
-
-  async logout(): Promise<void> {
-    try {
-      const storage = await this.getStorage();
-      await storage.remove(TOKEN_KEY);
-      this.currentUserSubject.next(null);
-    } catch (error) {
-      console.error('Error during logout', error);
+  
+  // Gestione errori migliorata
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    
+    if (error.error instanceof ErrorEvent) {
+      // Errore client-side
+      errorMessage = `Errore: ${error.error.message}`;
+      console.error('Errore client:', errorMessage);
+    } else if (error.status === 0) {
+      // Errore di rete/server non raggiungibile
+      errorMessage = 'Il server non è raggiungibile. Verifica la tua connessione.';
+      console.error('Errore di connessione al server');
+    } else {
+      // Errore server-side
+      errorMessage = error.error?.message || `Errore del server: ${error.status}`;
+      console.error(`Backend ha restituito codice ${error.status}, corpo:`, error.error);
     }
+    
+    return throwError(() => ({
+      error: error.error,
+      message: errorMessage,
+      status: error.status
+    }));
   }
 
-  async getToken(): Promise<string | null> {
-    try {
-      const storage = await this.getStorage();
-      return await storage.get(TOKEN_KEY);
-    } catch (error) {
-      console.error('Error getting token', error);
-      return null;
-    }
+  logout(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this.currentUserSubject.next(null);
+    console.log('Utente disconnesso, token rimosso');
   }
 
   isAuthenticated(): Observable<boolean> {
-    return from(this.getToken()).pipe(
-      map(token => {
-        if (!token) return false;
-        
-        try {
-          const decoded: any = jwtDecode(token);
-          return decoded.exp > Date.now() / 1000;
-        } catch (error) {
-          return false;
-        }
-      }),
-      catchError(() => of(false))
-    );
+    const token = localStorage.getItem(TOKEN_KEY);
+    // Se non c'è token, non è autenticato
+    if (!token) {
+      return of(false);
+    }
+    
+    // Opzionale: verifica che il token non sia scaduto
+    try {
+      // Se il token è un JWT, puoi decodificarlo e controllare exp
+      // Questo è un semplice check per vedere se il token è formattato come JWT
+      if (token.split('.').length !== 3) {
+        console.warn('Token non valido, formato non JWT');
+        return of(false);
+      }
+      
+      return of(true);
+    } catch (e) {
+      console.error('Errore nella verifica del token', e);
+      return of(false);
+    }
   }
+  
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  // Per debug
+
 }

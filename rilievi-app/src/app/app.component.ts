@@ -1,16 +1,23 @@
 import { Component } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { DatabaseService } from './services/database.service';
+import { Storage } from '@ionic/storage-angular';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   standalone: true,
-  imports: [IonApp, IonRouterOutlet, RouterLink, RouterLinkActive]
+  imports: [IonApp, IonRouterOutlet]
 })
 export class AppComponent {
-  constructor(private databaseService: DatabaseService) {
-    // Il servizio database inizializzerà SQLite automaticamente durante la costruzione
+  constructor(private storage: Storage) {
+    this.initializeApp();
+  }
+
+  async initializeApp() {
+    try {
+      await this.storage.create();
+    } catch (error) {
+      console.error('Storage initialization error:', error);
+    }
   }
 }

@@ -1,98 +1,169 @@
 import { Injectable } from '@angular/core';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Storage } from '@ionic/storage-angular';
-import { Platform } from '@ionic/angular';
+import { Platform, AlertController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FotoService {
-  public photos: { filepath: string; webviewPath: string; commento: string }[] = [];
+  public photos: UserPhoto[] = [];
   
-  constructor(private platform: Platform, private storage: Storage) {}
+  constructor(private platform: Platform, private storage: Storage, private alertController: AlertController) {}
 
-  public async addNewPhoto() {
-    // Prendi una foto
-    const capturedPhoto = await Camera.getPhoto({
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
-      quality: 80
-    });
-    
-    // Salva la foto e aggiungi al array
-    const savedImageFile = await this.savePicture(capturedPhoto);
-    this.photos.unshift(savedImageFile);
-    
-    return savedImageFile;
+  // Nuovo metodo per mostrare le opzioni
+  async scegliSorgenteFoto(): Promise<UserPhoto | null> {
+    try {
+      // Verifica i permessi prima di procedere
+      await Camera.checkPermissions();
+      
+      // Prepara le opzioni per la fotocamera
+      const options = {
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        promptLabelHeader: 'Seleziona sorgente',
+        promptLabelCancel: 'Annulla',
+        promptLabelPhoto: 'Dalla galleria',
+        promptLabelPicture: 'Scatta foto'
+      };
+      
+      // Chiedi all'utente se vuole usare la fotocamera o la galleria
+      const source = await this.presentSourceChoice();
+      
+      if (!source) return null; // L'utente ha annullato
+      
+      // Cattura l'immagine dalla sorgente selezionata
+      const image = await Camera.getPhoto({
+        ...options,
+        source: source
+      });
+      
+      // Processa la foto e aggiungila all'array
+      const newPhoto = await this.savePhoto(image);
+      return newPhoto;
+    } catch (error) {
+      console.error('Errore durante l\'acquisizione della foto', error);
+      return null;
+    }
   }
-
-  private async savePicture(photo: Photo) {
-    // Converti foto in formato base64
+  
+  // Helper per mostrare la scelta tra fotocamera e galleria
+  private async presentSourceChoice(): Promise<CameraSource | null> {
+    return new Promise(async (resolve) => {
+      const alert = await this.alertController.create({
+        header: 'Scegli sorgente',
+        buttons: [
+          {
+            text: 'Annulla',
+            role: 'cancel',
+            handler: () => resolve(null)
+          },
+          {
+            text: 'Fotocamera',
+            handler: () => resolve(CameraSource.Camera)
+          },
+          {
+            text: 'Galleria',
+            handler: () => resolve(CameraSource.Photos)
+          }
+        ]
+      });
+      
+      await alert.present();
+    });
+  }
+  
+  // Metodo per salvare la foto
+  private async savePhoto(photo: Photo): Promise<UserPhoto> {
+    // Converti in base64 se necessario
     const base64Data = await this.readAsBase64(photo);
     
-    // Scrivi il file nel filesystem
-    const fileName = new Date().getTime() + '.jpeg';
-    const savedFile = await Filesystem.writeFile({
-      path: fileName,
-      data: base64Data,
-      directory: Directory.Data
-    });
+    // Crea un nuovo oggetto UserPhoto
+    const newPhoto: UserPhoto = {
+      commento: '',  // Aggiunto campo obbligatorio
+      filepath: new Date().getTime() + '.jpeg',
+      webviewPath: photo.webPath,
+      base64: base64Data
+    };
     
-    if (this.platform.is('hybrid')) {
-      // Leggi il file se siamo in un dispositivo nativo
-      return {
-        filepath: savedFile.uri,
-        webviewPath: Capacitor.convertFileSrc(savedFile.uri),
-        commento: ''
-      };
-    }
-    else {
-      // Usa webPath se siamo nel browser
-      return {
-        filepath: fileName,
-        webviewPath: photo.webPath || '',
-        commento: ''
-      };
-    }
+    // Aggiungi all'array
+    this.photos.unshift(newPhoto);
+    
+    return newPhoto;
   }
-
-  // Converti una foto in formato base64
-  private async readAsBase64(photo: Photo) {
-    // "hybrid" è Capacitor o Cordova
+  
+  // Metodo per convertire in base64
+  private async readAsBase64(photo: Photo): Promise<string> {
     if (this.platform.is('hybrid')) {
-      if (!photo.path) {
-        throw new Error('Photo path is undefined');
-      }
       const file = await Filesystem.readFile({
-        path: photo.path
-      });
-      return file.data;
-    }
-    else {
-      // Recupera la foto, leggi come blob, poi converti in base64
-      if (!photo.webPath) {
-        throw new Error('Photo webPath is undefined');
-      }
-      const response = await fetch(photo.webPath);
+          path: photo.path!,
+          encoding: 'base64'.toString() as Encoding
+        });
+      return file.data as string;
+    } else {
+      // Web: Fetch dalla webview path
+      const response = await fetch(photo.webPath!);
       const blob = await response.blob();
       return await this.convertBlobToBase64(blob) as string;
     }
   }
-
-  private convertBlobToBase64 = (blob: Blob) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      resolve(reader.result);
-    };
-    reader.readAsDataURL(blob);
-  });
+  
+  private convertBlobToBase64 = (blob: Blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        resolve(reader.result);
+      };
+      reader.readAsDataURL(blob);
+    });
+  };
 
   public addCommento(index: number, commento: string) {
     if (this.photos[index]) {
       this.photos[index].commento = commento;
     }
   }
+
+  async getFilesFromPhotos(): Promise<File[]> {
+    const files: File[] = [];
+    
+    console.log('Convertendo', this.photos.length, 'foto in file');
+    
+    for (const photo of this.photos) {
+      if (photo.webviewPath) {
+        try {
+          // Converti base64/webviewPath in Blob
+          const response = await fetch(photo.webviewPath);
+          const blob = await response.blob();
+          
+          // Genera un nome univoco per il file
+          const fileName = `photo_${new Date().getTime()}_${Math.floor(Math.random() * 1000)}.jpeg`;
+          
+          // Crea un File dal Blob
+          const file = new File([blob], fileName, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          
+          console.log('File creato:', file.name, file.size, 'bytes');
+          files.push(file);
+        } catch (e) {
+          console.error('Errore conversione foto in file', e);
+        }
+      }
+    }
+    
+    return files;
+  }
+}
+
+export interface UserPhoto {
+  commento: string;
+  filepath: string;
+  webviewPath?: string;
+  base64?: string;
 }

@@ -35,3 +35,50 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Fix per problemi di input su mobile e touch */
+:root {
+    --ion-safe-area-top: env(safe-area-inset-top);
+    --ion-safe-area-bottom: env(safe-area-inset-bottom);
+    --ion-safe-area-left: env(safe-area-inset-left);
+    --ion-safe-area-right: env(safe-area-inset-right);
+  }
+  
+  /* Fix touch inputs su Android */
+  input, 
+  ion-input, 
+  ion-textarea, 
+  ion-select, 
+  ion-datetime, 
+  ion-searchbar,
+  button,
+  ion-button {
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+  }
+  
+  /* Migliora target area per touch su Android */
+  ion-item, 
+  ion-button, 
+  button, 
+  a[role="button"] {
+    min-height: 44px;
+  }
+  
+  /* Assicurati che i font siano visibili */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Per evitare problemi con keyboard su Android */
+  ion-content {
+    --keyboard-offset: 0 !important;
+  }
+  
+  /* Fix per problemi di scorrimento */
+  .ion-page {
+    overscroll-behavior: none;
+    contain: layout style;
+  }

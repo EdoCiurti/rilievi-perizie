@@ -791,3 +791,8 @@ app.put('/api/perizie/modifica', authenticateToken, upload.array('immagini'), as
         res.status(500).json({ errore: 'Errore durante la modifica della perizia' });
     }
 });
+
+// Endpoint api/health
+app.get('/api/health', (req, res) =>
+    res.status(200).json({ status: 'OK' })
+);

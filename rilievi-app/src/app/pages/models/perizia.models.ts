@@ -1,10 +1,14 @@
 export interface Perizia {
+  _id: string;
+  descrizione: string;
+  cliente: string;
+  indirizzo: string;
+  stato: string;
+  createdAt: string;
+  updatedAt: string;
+  immagini?: Array<{
     _id: string;
-    stato: string;
-    // Add any other properties that your Perizia object might have
-    titolo?: string;
-    data?: Date;
-    cliente?: string;
-    indirizzo?: string;
-    descrizione?: string;
-  }
+    url: string;
+  }>;
+  coordinate?: { latitude: number, longitude: number } | null;
+}

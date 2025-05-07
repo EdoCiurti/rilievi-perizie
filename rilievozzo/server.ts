@@ -952,4 +952,4 @@ app.put('/api/perizie/modifica', authenticateToken, upload.array('immagini') as 
     console.error('Errore modifica perizia:', err);
     res.status(500).json({ errore: 'Errore durante la modifica della perizia' });
   }
-});
+}); 

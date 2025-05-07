@@ -65,6 +65,12 @@
       </ion-card-content>
     </ion-card>
 
+    <!-- Aggiungi questo pulsante nella toolbar o nel corpo della pagina -->
+    <ion-button expand="block" (click)="modificaPerizia()" color="primary">
+      <ion-icon slot="start" name="create"></ion-icon>
+      Modifica perizia
+    </ion-button>
+
     <!-- Mappa -->
     <ion-card *ngIf="perizia.coordinate && perizia.coordinate.length === 2">
       <ion-card-header>
@@ -85,16 +91,10 @@
       <ion-card-content>
         <ion-grid *ngIf="perizia.immagini && perizia.immagini.length > 0">
           <ion-row>
-            <ion-col size="6" *ngFor="let img of perizia.immagini; let i = index">
-              <div class="image-container" (click)="visualizzaImmagine(i)">
-                <img [src]="img.url" alt="Immagine perizia" class="perizia-immagine">
-                <div class="image-overlay">
-                  <ion-icon name="expand-outline"></ion-icon>
-                </div>
-                <div class="image-comment" *ngIf="img.commento">
-                  <p>{{ img.commento }}</p>
-                </div>
-              </div>
+            <ion-col size="6" size-md="4" *ngFor="let img of perizia.immagini; let i = index">
+              <ion-card class="image-card" (click)="visualizzaImmagine(img)">
+                <img [src]="getImageUrl(img)" alt="Immagine perizia" />
+              </ion-card>
             </ion-col>
           </ion-row>
         </ion-grid>

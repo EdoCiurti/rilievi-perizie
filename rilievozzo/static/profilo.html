@@ -314,6 +314,16 @@
             opacity: 1;
             visibility: visible;
         }
+
+        /* Custom CSS to keep specific profile text elements black in dark mode */
+        body.dark #infoUsername,
+        body.dark #infoEmail,
+        body.dark #infoRole,
+        body.dark #infoPhone,
+        body.dark #infoAddress,
+        body.dark .font-medium {
+            color: #000000 !important;
+        }
     </style>
 </head>
 
@@ -457,15 +467,15 @@
                                 <div class="space-y-3">
                                     <div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Nome utente</p>
-                                        <p id="infoUsername" class="font-medium">Caricamento...</p>
+                                        <p id="infoUsername" class="font-medium text-gray-700 dark:text-gray-900">Caricamento...</p>
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                                        <p id="infoEmail" class="font-medium">Caricamento...</p>
+                                        <p id="infoEmail" class="font-medium text-gray-700 dark:text-gray-900">Caricamento...</p>
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Ruolo</p>
-                                        <p id="infoRole" class="font-medium">Caricamento...</p>
+                                        <p id="infoRole" class="font-medium text-gray-700 dark:text-gray-900">Caricamento...</p>
                                     </div>
                                 </div>
 
@@ -485,11 +495,11 @@
                                 <div class="space-y-3">
                                     <div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Telefono</p>
-                                        <p id="infoPhone" class="font-medium">Caricamento...</p>
+                                        <p id="infoPhone" class="font-medium text-gray-700 dark:text-gray-900">Caricamento...</p>
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Indirizzo</p>
-                                        <p id="infoAddress" class="font-medium">Caricamento...</p>
+                                        <p id="infoAddress" class="font-medium text-gray-700 dark:text-gray-900">Caricamento...</p>
                                     </div>
                                 </div>
 
@@ -498,7 +508,7 @@
                                     <i class="fas fa-key mr-2"></i>Cambia Password
                                 </button>
                             </div>
-                        </div>
+                        </div>  
                     </div>
                 </div>
 

@@ -9,7 +9,6 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    // Cambia loadChildren a loadComponent per componenti standalone
     loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage)
   },
   {

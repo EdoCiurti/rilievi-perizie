@@ -30,11 +30,21 @@
       <ion-text color="danger">Password richiesta</ion-text>
     </div>
 
+    <div class="ion-padding-top" *ngIf="errorMessage">
+      <ion-text color="danger">
+        <p class="ion-text-center">{{ errorMessage }}</p>
+      </ion-text>
+    </div>
+
     <div class="ion-padding-top">
       <ion-button type="submit" expand="block" [disabled]="loginForm.invalid || isLoading">
         <ion-spinner name="dots" *ngIf="isLoading"></ion-spinner>
         <span *ngIf="!isLoading">Accedi</span>
       </ion-button>
+    </div>
+    
+    <div class="ion-text-center ion-padding-top" *ngIf="!isLoading">
+      <p>Usa le credenziali fornite dal tuo amministratore</p>
     </div>
   </form>
 </ion-content>

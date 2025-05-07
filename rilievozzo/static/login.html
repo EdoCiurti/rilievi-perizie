@@ -497,11 +497,16 @@
     
     <div class="form-container">
       <div class="tabs">
-        <div class="tab-indicator" id="tabIndicator"></div>
+        <div class="tab-indicator" id="tabIndicator" style="width: 100%;"></div>
         <div id="loginTab" class="tab active">Accedi</div>
-        <div id="registerTab" class="tab">Registrati</div>
+        <div id="registerTab" class="tab"></div>
       </div>
-      
+      <script>
+        //disattiva il bottone di registrazione
+        document.getElementById('registerTab').classList.add('disabled');
+        //metti la scritta accedi al centro di tabs
+        document.getElementById('loginTab').style.marginLeft = '140px';
+      </script>
       <!-- Login Form -->
       <div id="loginContent" class="tab-content active">
         <form id="loginForm">
@@ -570,13 +575,7 @@
       document.getElementById('tabIndicator').classList.remove('register');
     });
     
-    document.getElementById('registerTab').addEventListener('click', () => {
-      document.getElementById('loginTab').classList.remove('active');
-      document.getElementById('registerTab').classList.add('active');
-      document.getElementById('loginContent').classList.remove('active');
-      document.getElementById('registerContent').classList.add('active');
-      document.getElementById('tabIndicator').classList.add('register');
-    });
+
 
     // Login form handling
     const loginForm = document.getElementById('loginForm');

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rilievi &amp; Perizie</string>
+    <string name="title_activity_main">Rilievi &amp; Perizie</string>
+    <string name="package_name">com.tua_azienda.rilievi</string>
+    <string name="custom_url_scheme">com.tua_azienda.rilievi</string>
+</resources>
